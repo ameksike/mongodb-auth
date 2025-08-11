@@ -14,8 +14,9 @@ Password authentication is the most common and straightforward method for connec
 
 ### Environment Variables
 
-Create a `.env` file in your project root:
+Create a `.env` file in your project root. The configuration depends on whether you're connecting to a local MongoDB instance or MongoDB Atlas:
 
+### For Local MongoDB:
 ```env
 MONGO_HOST=localhost
 MONGO_PORT=27017
@@ -24,6 +25,18 @@ MONGO_PASSWORD=your_password
 MONGO_AUTH_SOURCE=admin
 MONGO_DATABASE=testdb
 ```
+
+### For MongoDB Atlas:
+```env
+MONGO_CLUSTER=cluster0.xxxxx.mongodb.net
+MONGO_USERNAME=your_atlas_username
+MONGO_PASSWORD=your_atlas_password
+MONGO_AUTH_SOURCE=admin
+MONGO_DATABASE=your_database
+MONGO_TLS=true
+```
+
+**Note:** When using Atlas, comment out or remove the `MONGO_HOST` and `MONGO_PORT` variables. The `MONGO_CLUSTER` takes precedence.
 
 ### MongoDB User Setup
 
