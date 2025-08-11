@@ -158,7 +158,7 @@ async function mockServiceAccountAuth() {
 /**
  * Demonstrate service account authentication with fallback for demo
  */
-async function demonstrateServiceAccountAuth() {
+async function main() {
   console.log('🔐 MongoDB Service Account Authentication Demo');
   console.log('===========================================\n');
   
@@ -298,11 +298,11 @@ async function demonstrateServiceAccountAuth() {
 
 // Run demo if called directly
 if (require.main === module) {
-  demonstrateServiceAccountAuth();
+  main();
 }
 
 module.exports = { 
   connectWithServiceAccount, 
   generateJWTToken,
-  demonstrateServiceAccountAuth 
+  main 
 };

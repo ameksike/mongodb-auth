@@ -7,11 +7,11 @@ require('dotenv').config();
 const { displayResults, handleError } = require('./shared/utils');
 
 // Import all authentication demos
-const { demonstratePasswordAuth } = require('./password-auth');
-const { demonstrateCertificateAuth } = require('./certificate-auth');
-const { demonstrateAWSAuth } = require('./aws-auth');
-const { demonstrateAPIKeyAuth } = require('./api-key-auth');
-const { demonstrateServiceAccountAuth } = require('./service-account-auth');
+const { main: demonstratePasswordAuth } = require('./auth-password');
+const { main: demonstrateCertificateAuth } = require('./auth-certificate');
+const { main: demonstrateAWSAuth } = require('./auth-aws');
+const { main: demonstrateAPIKeyAuth } = require('./auth-api.key');
+const { main: demonstrateServiceAccountAuth } = require('./auth-service-account');
 
 /**
  * Available authentication methods

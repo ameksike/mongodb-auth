@@ -84,7 +84,7 @@ async function connectWithAWS() {
 /**
  * Demonstrate AWS IAM authentication with fallback for demo
  */
-async function demonstrateAWSAuth() {
+async function main() {
   console.log('🔐 MongoDB AWS IAM Authentication Demo');
   console.log('====================================\n');
   
@@ -215,7 +215,7 @@ async function demonstrateAWSAuth() {
 
 // Run demo if called directly
 if (require.main === module) {
-  demonstrateAWSAuth();
+  main();
 }
 
-module.exports = { connectWithAWS, demonstrateAWSAuth };
+module.exports = { connectWithAWS, main };

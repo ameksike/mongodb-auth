@@ -78,7 +78,7 @@ async function connectWithCertificate() {
 /**
  * Demonstrate certificate authentication with fallback for demo
  */
-async function demonstrateCertificateAuth() {
+async function main() {
   console.log('🔐 MongoDB X.509 Certificate Authentication Demo');
   console.log('===============================================\n');
   
@@ -195,7 +195,7 @@ async function demonstrateCertificateAuth() {
 
 // Run demo if called directly
 if (require.main === module) {
-  demonstrateCertificateAuth();
+  main();
 }
 
-module.exports = { connectWithCertificate, demonstrateCertificateAuth };
+module.exports = { connectWithCertificate, main };

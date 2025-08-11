@@ -43,7 +43,7 @@ async function connectWithPassword() {
 /**
  * Demonstrate password authentication and basic operations
  */
-async function demonstratePasswordAuth() {
+async function main() {
   let client;
   
   try {
@@ -118,7 +118,7 @@ async function demonstratePasswordAuth() {
 
 // Run demo if called directly
 if (require.main === module) {
-  demonstratePasswordAuth();
+  main();
 }
 
-module.exports = { connectWithPassword, demonstratePasswordAuth };
+module.exports = { connectWithPassword, main };

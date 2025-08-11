@@ -98,7 +98,7 @@ async function connectWithProgrammaticAPI() {
 /**
  * Demonstrate API key authentication with fallback for demo
  */
-async function demonstrateAPIKeyAuth() {
+async function main() {
   console.log('🔐 MongoDB API Key Authentication Demo');
   console.log('===================================\n');
   
@@ -233,11 +233,11 @@ async function demonstrateAPIKeyAuth() {
 
 // Run demo if called directly
 if (require.main === module) {
-  demonstrateAPIKeyAuth();
+  main();
 }
 
 module.exports = { 
   connectWithAPIKey, 
   connectWithProgrammaticAPI, 
-  demonstrateAPIKeyAuth 
+  main 
 };
