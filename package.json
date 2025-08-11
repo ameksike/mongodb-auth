@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "demo": "node src/index.js",
+    "dev": "node src/index.js",
     "demo:all": "node src/index.js all",
     "demo:password": "node src/index.js password",
     "demo:certificate": "node src/index.js certificate",

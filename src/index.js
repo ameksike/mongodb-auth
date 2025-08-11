@@ -23,7 +23,7 @@ const authMethods = {
     demo: demonstratePasswordAuth
   },
   certificate: {
-    name: 'X.509 Certificate Authentication', 
+    name: 'X.509 Certificate Authentication',
     description: 'Certificate-based authentication',
     demo: demonstrateCertificateAuth
   },
@@ -50,14 +50,14 @@ const authMethods = {
 function displayAvailableMethods() {
   console.log('🔐 MongoDB Authentication Methods Demo');
   console.log('====================================\n');
-  
+
   console.log('Available authentication methods:\n');
-  
+
   Object.entries(authMethods).forEach(([key, method]) => {
     console.log(`  ${key.padEnd(15)} - ${method.name}`);
     console.log(`  ${' '.repeat(15)}   ${method.description}\n`);
   });
-  
+
   console.log('Usage:');
   console.log('  node src/index.js [method]');
   console.log('  node src/index.js all       - Run all demos');
@@ -77,13 +77,13 @@ async function runAuthDemo(method) {
     console.error('Run without arguments to see available methods.\n');
     return;
   }
-  
+
   const authMethod = authMethods[method];
-  
+
   console.log(`\n${'='.repeat(60)}`);
   console.log(`  ${authMethod.name}`);
   console.log(`${'='.repeat(60)}\n`);
-  
+
   try {
     await authMethod.demo();
   } catch (error) {
@@ -97,7 +97,7 @@ async function runAuthDemo(method) {
 async function runAllDemos() {
   console.log('🚀 Running All MongoDB Authentication Demos');
   console.log('==========================================\n');
-  
+
   for (const [key, method] of Object.entries(authMethods)) {
     try {
       await runAuthDemo(key);
@@ -107,7 +107,7 @@ async function runAllDemos() {
       console.log('\n' + '─'.repeat(60) + '\n');
     }
   }
-  
+
   console.log('✅ All authentication demos completed!');
 }
 
@@ -116,14 +116,14 @@ async function runAllDemos() {
  */
 async function main() {
   const args = process.argv.slice(2);
-  
+
   if (args.length === 0) {
     displayAvailableMethods();
     return;
   }
-  
-  const method = args[0].toLowerCase();
-  
+
+  const method = args[0].toLowerCase() || 'all';
+
   if (method === 'all') {
     await runAllDemos();
   } else {
