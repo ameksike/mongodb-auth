@@ -141,7 +141,7 @@ project/
 │   ├── client-combined.pem    # Client certificate + key
 │   └── client.pem            # Client certificate only
 ├── src/
-│   └── certificate-auth.js   # Authentication demo
+│   └── auth-certificate.js   # Authentication demo
 └── .env                      # Environment configuration
 ```
 
@@ -293,6 +293,36 @@ db.createUser({
 - [ ] Certificate subject matches username exactly
 - [ ] Network connectivity allows TLS connections
 - [ ] File permissions allow reading certificate files
+
+## Usage
+
+You can test the certificate authentication using the following methods:
+
+### Using npm scripts:
+```bash
+# Run certificate authentication demo
+npm run demo:certificate
+
+# Run all authentication methods
+npm run demo:all
+```
+
+### Using Node.js directly:
+```bash
+# Run certificate authentication demo
+node src/index.js certificate
+
+# Run all authentication methods
+node src/index.js all
+```
+
+### Implementation File
+The certificate authentication implementation can be found in: `src/auth-certificate.js`
+
+The main demonstration function is exported as `main` and can be imported as:
+```javascript
+const { main: demonstrateCertificateAuth } = require('./src/auth-certificate');
+```
 
 ## Related Topics
 

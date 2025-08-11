@@ -175,6 +175,36 @@ const client = new MongoClient(uri, {
 - [ ] Firewall allows connections on MongoDB port
 - [ ] Environment variables are loaded correctly
 
+## Usage
+
+You can test the password authentication using the following methods:
+
+### Using npm scripts:
+```bash
+# Run password authentication demo
+npm run demo:password
+
+# Run all authentication methods
+npm run demo:all
+```
+
+### Using Node.js directly:
+```bash
+# Run password authentication demo
+node src/index.js password
+
+# Run all authentication methods
+node src/index.js all
+```
+
+### Implementation File
+The password authentication implementation can be found in: `src/auth-password.js`
+
+The main demonstration function is exported as `main` and can be imported as:
+```javascript
+const { main: demonstratePasswordAuth } = require('./src/auth-password');
+```
+
 ## Related Topics
 
 - [Certificate Authentication](./certificate-authentication.md)

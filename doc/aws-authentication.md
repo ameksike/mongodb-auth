@@ -389,6 +389,36 @@ const client = new MongoClient(uri, {
 - [ ] IAM policies grant necessary permissions
 - [ ] Credentials are not expired
 
+## Usage
+
+You can test the AWS authentication using the following methods:
+
+### Using npm scripts:
+```bash
+# Run AWS authentication demo
+npm run demo:aws
+
+# Run all authentication methods
+npm run demo:all
+```
+
+### Using Node.js directly:
+```bash
+# Run AWS authentication demo
+node src/index.js aws
+
+# Run all authentication methods
+node src/index.js all
+```
+
+### Implementation File
+The AWS authentication implementation can be found in: `src/auth-aws.js`
+
+The main demonstration function is exported as `main` and can be imported as:
+```javascript
+const { main: demonstrateAWSAuth } = require('./src/auth-aws');
+```
+
 ## Related Topics
 
 - [Password Authentication](./password-authentication.md)

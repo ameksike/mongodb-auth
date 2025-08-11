@@ -436,6 +436,36 @@ const client = new MongoClient(uri, {
 - [ ] Service account has necessary permissions
 - [ ] Token refresh mechanism is implemented
 
+## Usage
+
+You can test the service account authentication using the following methods:
+
+### Using npm scripts:
+```bash
+# Run service account authentication demo
+npm run demo:serviceaccount
+
+# Run all authentication methods
+npm run demo:all
+```
+
+### Using Node.js directly:
+```bash
+# Run service account authentication demo
+node src/index.js serviceaccount
+
+# Run all authentication methods
+node src/index.js all
+```
+
+### Implementation File
+The service account authentication implementation can be found in: `src/auth-service-account.js`
+
+The main demonstration function is exported as `main` and can be imported as:
+```javascript
+const { main: demonstrateServiceAccountAuth } = require('./src/auth-service-account');
+```
+
 ## Related Topics
 
 - [Password Authentication](./password-authentication.md)

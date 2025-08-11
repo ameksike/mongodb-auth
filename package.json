@@ -4,7 +4,14 @@
   "description": "Comprehensive demo of MongoDB authentication methods",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "demo": "node src/index.js",
+    "demo:all": "node src/index.js all",
+    "demo:password": "node src/index.js password",
+    "demo:certificate": "node src/index.js certificate",
+    "demo:aws": "node src/index.js aws",
+    "demo:apikey": "node src/index.js apikey",
+    "demo:serviceaccount": "node src/index.js serviceaccount"
   },
   "dependencies": {
     "mongodb": "^6.0.0",

@@ -438,6 +438,36 @@ async function monitorClusters() {
 - [ ] authSource is set to '$external'
 - [ ] Network connectivity allows Atlas access
 
+## Usage
+
+You can test the API key authentication using the following methods:
+
+### Using npm scripts:
+```bash
+# Run API key authentication demo
+npm run demo:apikey
+
+# Run all authentication methods
+npm run demo:all
+```
+
+### Using Node.js directly:
+```bash
+# Run API key authentication demo
+node src/index.js apikey
+
+# Run all authentication methods
+node src/index.js all
+```
+
+### Implementation File
+The API key authentication implementation can be found in: `src/auth-api.key.js`
+
+The main demonstration function is exported as `main` and can be imported as:
+```javascript
+const { main: demonstrateAPIKeyAuth } = require('./src/auth-api.key');
+```
+
 ## Related Topics
 
 - [Password Authentication](./password-authentication.md)
