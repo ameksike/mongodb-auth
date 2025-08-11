@@ -8,7 +8,7 @@ const { MongoClient } = require('mongodb');
 const DatabaseOperations = require('./shared/database-operations');
 const { displayResults, handleError, displayMongoshCommands } = require('./shared/utils');
 
-function getConfig() {
+function configure() {
   const config = {
     uri: process.env.MONGO_URI,
     // Atlas cluster URL (if provided, takes precedence over host/port)
@@ -29,12 +29,21 @@ function getConfig() {
     config.uri = `${protocol}://${config.username}:${config.password}@${host}/${config.database}?authSource=${config.authSource}`;
   }
 
-  return config;
+  const options = {
+    serverSelectionTimeoutMS: 5000,
+  };
+
+  // Add TLS options for Atlas
+  if (options.tls) {
+    options.tls = true;
+  }
+
+  return { config, options };
 }
 /**
  * Password-based authentication configuration
  */
-const config = getConfig();
+const { config, options } = configure();
 
 /**
  * Create MongoDB connection using password authentication
@@ -42,16 +51,7 @@ const config = getConfig();
  */
 async function connectWithPassword() {
 
-  const clientOptions = {
-    serverSelectionTimeoutMS: 5000,
-  };
-
-  // Add TLS options for Atlas
-  if (config.tls) {
-    clientOptions.tls = true;
-  }
-
-  const client = new MongoClient(config.uri, clientOptions);
+  const client = new MongoClient(config.uri, options);
 
   try {
     await client.connect();
