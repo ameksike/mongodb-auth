@@ -20,7 +20,6 @@ function configure() {
     authSource: process.env.MONGO_AUTH_SOURCE || 'admin',
     database: process.env.MONGO_DATABASE || 'testdb',
     // Additional Atlas options
-    tls: process.env.MONGO_TLS === 'true' || !!process.env.MONGO_CLUSTER
   };
 
   if (!config.uri) {
@@ -31,12 +30,9 @@ function configure() {
 
   const options = {
     serverSelectionTimeoutMS: 5000,
+    // Add TLS options for Atlas
+    tls: process.env.MONGO_TLS === 'true' || !!process.env.MONGO_CLUSTER
   };
-
-  // Add TLS options for Atlas
-  if (options.tls) {
-    options.tls = true;
-  }
 
   return { config, options };
 }
