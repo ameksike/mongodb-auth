@@ -110,6 +110,20 @@ CLI OUTPUT:
 - Replace `<ACCOUNT_ID>` with your AWS account ID.
 - Replace `cluster-id/mdb-user` with your cluster details and database username.
 
+
+The IAM policy created allows your AWS IAM user to authenticate and connect to your MongoDB Atlas database by granting permissions for a specific AWS action and resource:
+
+1. **Action (`rds-db:connect`)**: The policy specifies the `rds-db:connect` action, which enables the IAM user to establish a secure, authenticated connection to a database.
+
+2. **Resource (`arn:aws:rds-db:<AWS_REGION>:<ACCOUNT_ID>:dbuser:cluster-id/mdb-user`)**: The policy restricts the connection to the specific database user `mdb-user` within a specific cluster in your MongoDB Atlas setup. This is defined by the resource ARN (Amazon Resource Name), which includes:
+   - **`<AWS_REGION>`**: The geographic region where your MongoDB Atlas cluster is hosted.
+   - **`<ACCOUNT_ID>`**: Your AWS account ID.
+   - **`cluster-id/mdb-user`**: The cluster identifier and the Atlas database user associated with the IAM authentication.
+
+3. **Effect (`Allow`)**: The policy explicitly grants permission (`Allow`) to perform this action on the specified resource, ensuring that the IAM user has the access needed for authentication and operations within the MongoDB Atlas cluster.
+
+In essence, this policy enables the Atlas database to recognize and authenticate your AWS IAM user (`mdb-user`) by verifying the permissions granted in AWS. Once authenticated, the IAM user can securely interact with the database based on additional permissions assigned to the database user within Atlas.
+
 ---
 
 ### **Step 3: Create IAM User**
