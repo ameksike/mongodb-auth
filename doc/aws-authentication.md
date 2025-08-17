@@ -1,159 +1,343 @@
-# MongoDB AWS IAM Authentication
+### MongoDB Atlas AWS IAM Authentication
 
-## Overview
+This improved and detailed guide walks you through **configuring AWS IAM authentication for MongoDB Atlas**, covering **AWS account setup**, **IAM roles/policies**, **MongoDB Atlas configuration**, and testing the connection using **Node.js** and **MongoDB Shell**. Each point is explained with more context to ensure a smooth setup.
 
-AWS IAM authentication allows you to connect to MongoDB Atlas using your AWS credentials instead of traditional username/password combinations. This method is particularly useful for applications running on AWS infrastructure and provides seamless integration with AWS security models.
+---
 
-## Prerequisites
+## **1. Prerequisites**
 
-- MongoDB Atlas cluster (AWS IAM auth is Atlas-specific)
-- AWS account with appropriate IAM permissions
-- AWS credentials configured (Access Key ID and Secret Access Key)
-- Node.js and npm installed
+To use AWS IAM authentication with MongoDB Atlas, ensure you have the following:
+### Tools
+- **Node.js** and **npm** (to run JavaScript projects)
+  - Install via [Node.js official website](https://nodejs.org)
+- **AWS CLI** (to manage AWS services)
+  - Install via [AWS CLI Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+- **MongoDB Shell (mongosh)** (to interact with MongoDB directly)
+  - Download [here](https://www.mongodb.com/try/download/shell)
+### Accounts
+- An **AWS account** ([Set up a free account](https://aws.amazon.com)) with proper IAM permissions
+- A **MongoDB Atlas** account ([Sign up here](https://www.mongodb.com/atlas/sign-up))
+### Atlas Cluster
+- A running **MongoDB Atlas Cluster** hosted in AWS (AWS IAM authentication is exclusive to clusters hosted on AWS).
 
-## MongoDB Atlas Configuration
+---
 
-### 1. Enable AWS IAM Authentication
+## **2. Create MongoDB Atlas Cluster**
 
-1. **Log in to MongoDB Atlas**
-2. **Navigate to Database Access**
-3. **Add Database User**
-4. **Select "AWS IAM" as Authentication Method**
-5. **Configure IAM Role or User ARN**
+MongoDB must first be configured to serve as the **source** for authentication via AWS IAM.
 
-### 2. Configure Database User
+1. **Create an Atlas Cluster**
+   - Log in to Mongo Atlas Cloud ([Link](https://cloud.mongodb.com)).
+   - Click **Build a Database** and choose **AWS** as the cloud provider.
+   - Follow on-page instructions to create and configure the Cluster.
 
-```javascript
-// Atlas Database User Configuration
-{
-  "authenticationMethod": "AWS IAM",
-  "awsIAMType": "USER", // or "ROLE" for EC2 instances
-  "awsIAMUser": "arn:aws:iam::123456789012:user/MyMongoDBUser",
-  "databaseRoles": [
-    {
-      "databaseName": "testdb",
-      "roleName": "readWrite"
-    }
-  ]
-}
-```
+2. **Enable AWS IAM Authentication:**
+   - Go to **Security > Database Access** in Atlas.
+   - Click **Add database user**.
+   - Choose **AWS IAM** as the authentication method.
+   - In the **IAM ARN field**, add your IAM **Role ARN** or **User ARN**
+        - (e.g., `arn:aws:iam::<ACCOUNT_ID>:user/mdb-user`).
+        - (e.g., `arn:aws:iam::275662791714:user/mdb-user`).
+   - Assign database roles (e.g., `readWrite`).
+   ![](./rsc/auth-aws.jpg)
+   - Save and apply changes.
+   ![](./rsc/auth-methods.jpg)
 
-## AWS IAM Policy Configuration
+---
 
-### 1. Create IAM Policy for MongoDB Access
+## **3. Configure AWS and IAM**
 
-```json
-{
+AWS serves as the authentication provider for IAM-based database access. Let’s configure it step by step.
+
+### **Step 1: Login to AWS**
+1. Open the [AWS Management Console](https://aws.amazon.com/console/).
+2. Log in using your **AWS credentials** (email/password for AWS root user or IAM user).
+3. Configure the default **region** for your account (e.g., *us-east-1*) since this must match the MongoDB Atlas cluster region.
+
+---
+
+### **Step 2: Create IAM Policy**
+IAM policy provides permissions for accessing the MongoDB Atlas cluster. Run the following commands in the **AWS CLI**:
+
+#### Command to create IAM policy:
+```bash
+aws iam create-policy --policy-name MongoDBAtlasAccess \
+--policy-document '{
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
       "Action": [
-        "rds-connect:connect"
+        "rds-db:connect"
       ],
       "Resource": [
-        "arn:aws:rds-db:region:account-id:dbuser:cluster-id/mongodb-user"
+        "arn:aws:rds-db:<AWS_REGION>:<ACCOUNT_ID>:dbuser:cluster-id/mdb-user"
       ]
     }
   ]
+}'
+```
+
+Creates a custom IAM policy named MongoDBAtlasAccess based on the permissions defined in the policy.mdb.access.json file. This approach is ideal when the policy document is lengthy, as it is more manageable to write and maintain the policy in a separate file before referencing its path during creation.
+
+
+
+```sh
+aws iam create-policy --policy-name MongoDBAtlasAccess --policy-document file://policy.mdb.access.json
+```
+CLI OUTPUT: 
+```js
+{
+    "Policy": {
+        "PolicyName": "MongoDBAtlasAccess",
+        "PolicyId": "ANPAUALWIMQRJ7DCXUKVB",
+        "Arn": "arn:aws:iam::275662791714:policy/MongoDBAtlasAccess",
+        "Path": "/",
+        "DefaultVersionId": "v1",
+        "AttachmentCount": 0,
+        "PermissionsBoundaryUsageCount": 0,
+        "IsAttachable": true,
+        "CreateDate": "2020-08-16T14:04:59+00:00",
+        "UpdateDate": "2020-08-16T14:04:59+00:00"
+    }
 }
 ```
 
-### 2. Attach Policy to IAM User/Role
+![](./rsc/auth-aws-dashboard.jpg)
+
+#### Key Details:
+- Replace `<AWS_REGION>` with your cluster's AWS region.
+- Replace `<ACCOUNT_ID>` with your AWS account ID.
+- Replace `cluster-id/mdb-user` with your cluster details and database username.
+
+---
+
+### **Step 3: Create IAM User**
+An IAM user enables applications or individuals to use AWS authentication resources.
+
+#### Commands to create the IAM user:
+```bash
+aws iam create-user --user-name mdb-user
+```
+CLI OUTPUT:
+```js
+{
+    "User": {
+        "Path": "/",
+        "UserName": "mdb-user",
+        "UserId": "AIDAUALWIMQRFMBBCPCH2",
+        "Arn": "arn:aws:iam::275662791714:user/mdb-user",
+        "CreateDate": "2020-08-16T14:08:52+00:00"
+    }
+}
+```
+![](./rsc/auth-aws-user.jpg)
+
+Attaches the specified IAM policy (MongoDBAtlasAccess) to the IAM user mdb-user, granting the user the permissions defined in the policy to access AWS resources required for authentication and operations, such as connecting to a MongoDB Atlas cluster.
 
 ```bash
-# Create IAM user
-aws iam create-user --user-name mongodb-user
-
-# Attach policy to user
-aws iam attach-user-policy --user-name mongodb-user --policy-arn arn:aws:iam::account:policy/MongoDBAtlasAccess
-
-# Create access keys
-aws iam create-access-key --user-name mongodb-user
+# Ex: aws iam attach-user-policy --user-name mdb-user --policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/<POLICY_NAME>
+aws iam attach-user-policy --user-name mdb-user --policy-arn arn:aws:iam::275662791714:policy/MongoDBAtlasAccess
 ```
 
-## Environment Variables
+Generates a new access key for the IAM user mdb-user, providing credentials (Access Key ID and Secret Access Key) that can be used for programmatic access to AWS services and resources.
 
-Create a `.env` file:
+```bash
+aws iam create-access-key --user-name mdb-user
+```
+CLI OUTPUT:
+```js
+{
+    "AccessKey": {
+        "UserName": "mdb-user",
+        "AccessKeyId": "AKIAUALWIMQRHSKO2QMF",
+        "Status": "Active",
+        "SecretAccessKey": "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",
+        "CreateDate": "2020-08-16T14:12:52+00:00"
+    }
+}
+```
+
+Retrieves a list of all active and inactive access keys associated with the IAM user mdb-user, including metadata such as the creation date and status of each key.
+
+```bash
+aws iam list-access-keys --user-name mdb-user
+```
+CLI OUTPUT:
+```js
+{
+    "AccessKeyMetadata": [
+        {
+            "UserName": "mdb-user",
+            "AccessKeyId": "AKIAUALWIMQRHSKO2QMF",
+            "Status": "Active",
+            "CreateDate": "2025-08-16T14:12:52+00:00"
+        }
+    ]
+}
+```
+
+Provides details about the IAM user mdb-user, including attributes such as the user's ARN, User ID, creation date, and any attached tags.
+
+```bash
+aws iam get-user --user-name mdb-user
+```
+CLI OUTPUT:
+```js
+{
+    "User": {
+        "Path": "/",
+        "UserName": "mdb-user",
+        "UserId": "AIDAUALWIMQRFMBBCPCH2",
+        "Arn": "arn:aws:iam::275662791714:user/mdb-user",
+        "CreateDate": "2025-08-16T14:08:52+00:00",
+        "Tags": [
+            {
+                "Key": "mongodb:infosec:creationTime",
+                "Value": "2025-08-16T14:08:52Z"
+            },
+            {
+                "Key": "mongodb:infosec:creatorIAMRole",
+                "Value": "AWSReservedSSO_AdministratorAccess_33cfb77ad9632b7c"
+            },
+            {
+                "Key": "mongodb:infosec:creator",
+                "Value": "antonio.membrides@mongodb.com"
+            },
+            {
+                "Key": "mongodb:infosec:WhatIsThis",
+                "Value": "https://wiki.corp.mongodb.com/display/SEC/Auto+Tagging"
+            }
+        ]
+    }
+}
+```
+
+#### Key Details:
+- Replace `<ACCOUNT_ID>` with your AWS account ID.
+- Save the generated **Access Key ID** and **Secret Access Key** securely—they’ll be used in the `.env` file.
+
+---
+
+### **Step 4: Create IAM Role for EC2**
+If you're running your application on an EC2 instance:
+1. Go to **IAM > Roles** in AWS Console.
+2. Create a new role for your EC2 instance.
+3. Attach the **MongoDBAtlasAccess** policy created earlier.
+4. Add this **Role ARN** to MongoDB Atlas.
+
+---
+
+### **Step 5: Configure Credentials**
+There are **three main ways** to provide credentials:
+1. **Environment Variables** (recommended): Create a `.env` file with the credentials.
+2. **AWS CLI Profile**: Store credentials in `~/.aws/credentials` file (use `aws configure`).
+3. **IAM Roles**: Use IAM roles directly for applications running on EC2 or Lambda.
+
+---
+
+## **4. Environment Variables**
+
+Create a `.env` file in your project directory to store credentials securely:
 
 ```env
-AWS_MONGO_CLUSTER_URL=your-cluster.mongodb.net
+AWS_MONGO_CLUSTER_URL=<your-cluster.mongodb.net>
 AWS_MONGO_DATABASE=testdb
-AWS_ACCESS_KEY_ID=your_access_key_id
-AWS_SECRET_ACCESS_KEY=your_secret_access_key
-AWS_SESSION_TOKEN=your_session_token  # Optional for temporary credentials
+AWS_ACCESS_KEY_ID=<access-key-id>
+AWS_SECRET_ACCESS_KEY=<secret-access-key>
 AWS_REGION=us-east-1
 ```
 
-## Connection Configuration
+> **Note**: Avoid hardcoding credentials in your code for security reasons.
 
-### Connection String Format
+---
 
-```
-mongodb+srv://cluster-url/database?authSource=$external&authMechanism=MONGODB-AWS
-```
+## **5. Node.js Code for AWS IAM Authentication**
 
-### Node.js Driver Configuration
-
-```javascript
-const { MongoClient } = require('mongodb');
-
-const uri = 'mongodb+srv://your-cluster.mongodb.net/testdb?authSource=$external&authMechanism=MONGODB-AWS';
-
-const client = new MongoClient(uri, {
-  authMechanism: 'MONGODB-AWS',
-  authSource: '$external',
-  serverSelectionTimeoutMS: 10000  // Increased timeout for AWS auth
-});
-```
-
-## AWS Credential Methods
-
-### 1. Environment Variables
-
+Install required dependencies:
 ```bash
-export AWS_ACCESS_KEY_ID=your_access_key
-export AWS_SECRET_ACCESS_KEY=your_secret_key
-export AWS_SESSION_TOKEN=your_session_token  # For temporary credentials
+npm install mongodb aws-sdk dotenv
 ```
 
-### 2. AWS Credentials File
-
-```ini
-# ~/.aws/credentials
-[default]
-aws_access_key_id = your_access_key
-aws_secret_access_key = your_secret_key
-
-[mongodb-user]
-aws_access_key_id = mongodb_access_key
-aws_secret_access_key = mongodb_secret_key
-```
-
-### 3. IAM Roles (for EC2 instances)
+### Authentication Script:
+Save the following code as `app.js`:
 
 ```javascript
-// Automatic credential discovery for EC2 instances
-const client = new MongoClient(uri, {
-  authMechanism: 'MONGODB-AWS',
-  authSource: '$external'
-  // No explicit credentials needed - uses instance metadata
-});
-```
-
-### 4. AWS SDK Configuration
-
-```javascript
+require('dotenv').config();
+const { MongoClient } = require('mongodb');
 const AWS = require('aws-sdk');
 
-// Configure AWS SDK
-AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  sessionToken: process.env.AWS_SESSION_TOKEN,
-  region: 'us-east-1'
-});
+async function connectToMongoDB() {
+  const config = {
+    clusterUrl: process.env.AWS_MONGO_CLUSTER_URL,
+    database: process.env.AWS_MONGO_DATABASE,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
+  };
+
+  // Configure AWS credentials
+  AWS.config.update({
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secretAccessKey,
+    region: config.region,
+  });
+
+  const uri = `mongodb+srv://${config.clusterUrl}/${config.database}?authSource=$external&authMechanism=MONGODB-AWS`;
+
+  const client = new MongoClient(uri, {
+    authMechanism: 'MONGODB-AWS',
+    authSource: '$external',
+    serverSelectionTimeoutMS: 10000,
+  });
+
+  try {
+    await client.connect();
+    console.log('✅ Successfully authenticated and connected to MongoDB Atlas.');
+    const db = client.db(config.database);
+    const collections = await db.listCollections().toArray();
+    console.log('Collections:', collections.map((c) => c.name));
+  } catch (error) {
+    console.error('❌ Connection failed:', error.message);
+  } finally {
+    await client.close();
+  }
+}
+
+connectToMongoDB();
 ```
+
+---
+
+## **6. Test MongoDB Connection**
+
+### Run Node.js Script:
+Execute the following command in the terminal:
+```bash
+node app.js
+```
+
+### Test Using MongoDB Shell:
+Authenticate directly with `mongosh`:
+```bash
+mongosh "mongodb+srv://<cluster.mongodb.net>/<database>?authSource=$external&authMechanism=MONGODB-AWS"
+```
+
+---
+
+## **7. Troubleshooting**
+
+### Common Problems:
+1. **Authentication Failure**:
+   - Verify AWS credentials (Access Key ID, Secret Access Key).
+   - Check MongoDB Atlas network access (whitelist your IP).
+   - Ensure your IAM Policy is correctly configured.
+
+2. **Timeouts**:
+   - Increase `serverSelectionTimeoutMS` in code.
+   - Verify MongoDB Atlas cluster is single-region.
+
+---
 
 ## Temporary Credentials
 
@@ -182,6 +366,7 @@ const client = new MongoClient(uri, {
   }
 });
 ```
+---
 
 ## Security Best Practices
 
@@ -192,236 +377,16 @@ const client = new MongoClient(uri, {
 5. **Network Security**: Configure Atlas network access lists
 6. **Monitoring**: Enable CloudTrail and Atlas auditing
 
-## MongoDB Shell Equivalent
+---
 
-### Basic Connection
 
-```bash
-# Set AWS credentials
-export AWS_ACCESS_KEY_ID=your_access_key
-export AWS_SECRET_ACCESS_KEY=your_secret_key
+### **End-to-End Setup Summary**
 
-# Connect using mongosh
-mongosh "mongodb+srv://your-cluster.mongodb.net/testdb?authSource=\$external&authMechanism=MONGODB-AWS"
-```
+1. **Create MongoDB Atlas Cluster** (AWS-hosted, enable IAM auth).
+2. **Create IAM Policy** (Grant permissions for “rds-db:connect”).
+3. **Create IAM User** and/or **IAM Role** (Attach the policy).
+4. Configure **Environment Variables**.
+5. Write authentication code (Node.js example).
+6. Test connection with Node.js and MongoDB Shell.
 
-### With Explicit Credentials
-
-```bash
-mongosh "mongodb+srv://your-cluster.mongodb.net/testdb" \
-  --authenticationMechanism MONGODB-AWS \
-  --authenticationDatabase '$external'
-```
-
-### Using AWS CLI Profile
-
-```bash
-# Set AWS profile
-export AWS_PROFILE=mongodb-user
-
-# Connect
-mongosh "mongodb+srv://your-cluster.mongodb.net/testdb?authSource=\$external&authMechanism=MONGODB-AWS"
-```
-
-## Common Use Cases
-
-### 1. EC2 Application Authentication
-
-```javascript
-// Application running on EC2 with IAM role
-const client = new MongoClient(
-  'mongodb+srv://cluster.mongodb.net/app?authSource=$external&authMechanism=MONGODB-AWS',
-  {
-    authMechanism: 'MONGODB-AWS',
-    authSource: '$external'
-    // Automatically uses EC2 instance IAM role
-  }
-);
-```
-
-### 2. Lambda Function Authentication
-
-```javascript
-// AWS Lambda function with execution role
-exports.handler = async (event) => {
-  const client = new MongoClient(process.env.MONGODB_URI, {
-    authMechanism: 'MONGODB-AWS',
-    authSource: '$external'
-  });
-  
-  await client.connect();
-  // Database operations...
-  await client.close();
-};
-```
-
-### 3. Cross-Account Access
-
-```javascript
-// Assume role in different AWS account
-const sts = new AWS.STS();
-const role = await sts.assumeRole({
-  RoleArn: 'arn:aws:iam::OTHER-ACCOUNT:role/MongoDBCrossAccountRole',
-  RoleSessionName: 'cross-account-mongodb'
-}).promise();
-
-// Use assumed role credentials
-const client = new MongoClient(uri, {
-  authMechanism: 'MONGODB-AWS',
-  authSource: '$external',
-  auth: {
-    username: role.Credentials.AccessKeyId,
-    password: role.Credentials.SecretAccessKey,
-    sessionToken: role.Credentials.SessionToken
-  }
-});
-```
-
-## Common Issues and Solutions
-
-### Authentication Failed
-
-**Error**: `Authentication failed`
-
-**Solutions**:
-- Verify AWS credentials are valid and not expired
-- Check IAM user/role exists in Atlas Database Access
-- Ensure correct AWS region is configured
-- Validate IAM policies grant necessary permissions
-
-### Network Timeout
-
-**Error**: `Server selection timed out`
-
-**Solutions**:
-- Check Atlas network access list includes your IP
-- Verify internet connectivity and DNS resolution
-- Increase serverSelectionTimeoutMS
-- Check firewall settings
-
-### Invalid Credentials
-
-**Error**: `Invalid AWS credentials`
-
-**Solutions**:
-- Verify AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-- Check if credentials are expired
-- Validate session token for temporary credentials
-- Ensure credentials have correct permissions
-
-## Monitoring and Logging
-
-### CloudTrail Integration
-
-```json
-{
-  "eventTime": "2023-01-01T12:00:00Z",
-  "eventName": "AssumeRole",
-  "eventSource": "sts.amazonaws.com",
-  "sourceIPAddress": "10.0.0.1",
-  "userIdentity": {
-    "type": "IAMUser",
-    "principalId": "AIDACKCEVSQ6C2EXAMPLE",
-    "arn": "arn:aws:iam::123456789012:user/mongodb-user"
-  },
-  "resources": [
-    {
-      "accountId": "123456789012",
-      "type": "AWS::IAM::Role",
-      "ARN": "arn:aws:iam::123456789012:role/MongoDBRole"
-    }
-  ]
-}
-```
-
-### Atlas Audit Logs
-
-```javascript
-// Enable auditing in Atlas
-{
-  "timestamp": "2023-01-01T12:00:00.000Z",
-  "atype": "authenticate",
-  "local": { "ip": "10.0.0.1", "port": 27017 },
-  "remote": { "ip": "203.0.113.1", "port": 54321 },
-  "users": [{ "user": "arn:aws:iam::123456789012:user/mongodb-user", "db": "$external" }],
-  "result": 0
-}
-```
-
-## Development vs Production
-
-### Development Configuration
-
-```javascript
-// More permissive for development
-{
-  authMechanism: 'MONGODB-AWS',
-  authSource: '$external',
-  serverSelectionTimeoutMS: 30000,  // Longer timeout
-  connectTimeoutMS: 30000,
-  socketTimeoutMS: 45000
-}
-```
-
-### Production Configuration
-
-```javascript
-// Optimized for production
-{
-  authMechanism: 'MONGODB-AWS',
-  authSource: '$external',
-  maxPoolSize: 50,
-  serverSelectionTimeoutMS: 10000,
-  heartbeatFrequencyMS: 10000,
-  retryWrites: true,
-  retryReads: true
-}
-```
-
-## Troubleshooting Checklist
-
-- [ ] MongoDB Atlas cluster is running and accessible
-- [ ] AWS credentials are correctly configured
-- [ ] IAM user/role is added to Atlas Database Access
-- [ ] Network access list includes your IP address
-- [ ] Connection string uses correct authentication parameters
-- [ ] AWS region matches cluster region
-- [ ] IAM policies grant necessary permissions
-- [ ] Credentials are not expired
-
-## Usage
-
-You can test the AWS authentication using the following methods:
-
-### Using npm scripts:
-```bash
-# Run AWS authentication demo
-npm run demo:aws
-
-# Run all authentication methods
-npm run demo:all
-```
-
-### Using Node.js directly:
-```bash
-# Run AWS authentication demo
-node src/index.js aws
-
-# Run all authentication methods
-node src/index.js all
-```
-
-### Implementation File
-The AWS authentication implementation can be found in: `src/auth-aws.js`
-
-The main demonstration function is exported as `main` and can be imported as:
-```javascript
-const { main: demonstrateAWSAuth } = require('./src/auth-aws');
-```
-
-## Related Topics
-
-- [Password Authentication](./password-authentication.md)
-- [Certificate Authentication](./certificate-authentication.md)
-- [API Key Authentication](./api-key-authentication.md)
-- [Service Account Authentication](./service-account-authentication.md)
+By following these steps, you will successfully integrate MongoDB Atlas AWS IAM authentication on your Windows PC! 🚀
