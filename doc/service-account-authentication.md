@@ -466,6 +466,10 @@ The main demonstration function is exported as `main` and can be imported as:
 const { main: demonstrateServiceAccountAuth } = require('./src/auth-service-account');
 ```
 
+## References 
+- [Service Accounts Overview](https://www.mongodb.com/docs/atlas/api/service-accounts-overview/)
+- [Generate Service Account Token](https://www.mongodb.com/docs/atlas/api/service-accounts/generate-oauth2-token/#std-label-generate-oauth2-token-atlas)
+
 ## Related Topics
 
 - [Password Authentication](./password-authentication.md)

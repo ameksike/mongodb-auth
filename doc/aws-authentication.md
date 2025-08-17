@@ -522,3 +522,7 @@ const client = new MongoClient(uri, {
 6. Test connection with Node.js and MongoDB Shell.
 
 By following these steps, you will successfully integrate MongoDB Atlas AWS IAM authentication on your Windows PC! 🚀
+
+## Resources
+- [AWS IAM Authentication](https://www.mongodb.com/docs/atlas/security/aws-iam-authentication/)
+- [Connect AWS IAM to MongoDB Atlas - Tutorial](https://www.mongodb.com/community/forums/t/connect-aws-iam-to-mongodb-atlas-tutorial/221683)
