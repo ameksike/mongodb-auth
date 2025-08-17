@@ -103,13 +103,6 @@ CLI OUTPUT:
 }
 ```
 
-![](./rsc/auth-aws-dashboard.jpg)
-
-#### Key Details:
-- Replace `<AWS_REGION>` with your cluster's AWS region.
-- Replace `<ACCOUNT_ID>` with your AWS account ID.
-- Replace `cluster-id/mdb-user` with your cluster details and database username.
-
 
 The IAM policy created allows your AWS IAM user to authenticate and connect to your MongoDB Atlas database by granting permissions for a specific AWS action and resource:
 
@@ -122,7 +115,132 @@ The IAM policy created allows your AWS IAM user to authenticate and connect to y
 
 3. **Effect (`Allow`)**: The policy explicitly grants permission (`Allow`) to perform this action on the specified resource, ensuring that the IAM user has the access needed for authentication and operations within the MongoDB Atlas cluster.
 
+![](./rsc/auth-aws-dashboard.jpg)
+
 In essence, this policy enables the Atlas database to recognize and authenticate your AWS IAM user (`mdb-user`) by verifying the permissions granted in AWS. Once authenticated, the IAM user can securely interact with the database based on additional permissions assigned to the database user within Atlas.
+
+#### Key Details:
+- Replace `<AWS_REGION>` with your cluster's AWS region.
+- Replace `<ACCOUNT_ID>` with your AWS account ID.
+- Replace `cluster-id/mdb-user` with your cluster details and database username.
+
+The **credentials and roles defined in MongoDB Atlas** ultimately govern the database user's permissions (e.g., `atlasAdmin`, `readWrite` roles) for operations within Atlas itself. The IAM policy on AWS **serves only to enable authentication** and does not define the actual MongoDB database operations. However, the policy can vary depending on the use case and other options you might want to specify. Let’s break this down:
+
+#### **Why is the primary role defined in Atlas?**
+- Once the AWS IAM user is authenticated by MongoDB Atlas using the IAM policy in AWS, Atlas takes over to determine what the database user (linked to the IAM ARN) can or cannot do.
+- The operations and roles for the user (`readWrite`, `atlasAdmin` etc.) are configured in Atlas via **Database Access** settings, not in the AWS IAM policy.
+
+The AWS IAM policy is like the "door key" allowing authentication, while the database roles in Atlas govern access inside the "building."
+
+#### **When would you need to customize the IAM policy further?**
+You might need to customize the AWS IAM policy to fit specific use cases. Here are examples of **other options** you could include in the policy:
+
+##### **a. Restrict Resource Access Further**
+Instead of allowing access to all users or defining resource ARNs broadly, you could define individual database users, roles, or clusters in the `Resource` section:
+```json
+"Resource": [
+  "arn:aws:rds-db:us-east-1:123456789012:dbuser:cluster-id/mongodb-user1",
+  "arn:aws:rds-db:us-east-1:123456789012:dbuser:cluster-id/mongodb-user2"
+]
+```
+This ensures that only specific database users (roles configured inside Atlas) are allowed.
+
+
+##### **b. Add Conditions for Access**
+You can add conditions to control access based on criteria like IP addresses, environment variables, or tags. For example:
+```json
+"Condition": {
+  "IpAddress": {
+    "aws:SourceIp": "192.168.1.0/24"
+  },
+  "StringEquals": {
+    "aws:RequestedRegion": "us-east-1"
+  }
+}
+```
+
+This policy ensures:
+- Access is only granted for users coming from specific IP addresses (e.g., your VPN or trusted network).
+- Access is limited to a specific AWS region (`us-east-1`).
+
+
+##### **c. Limit Specific Actions**
+If you want to restrict the actions that the IAM user can perform, you can modify the `Action` section. For example:
+```json
+"Action": [
+  "rds-db:connect",
+  "sts:GetCallerIdentity"
+]
+```
+Here, you not only enable the **connection to the database** but also ensure permissions for retrieving the user's AWS identity (`sts:GetCallerIdentity`) when verifying in MongoDB Atlas.
+
+
+##### **d. Allow Role-Based Authentication**
+If you want to use an **IAM Role** instead of a user for applications running on AWS infrastructure (e.g., EC2 or Lambda), you can specify the role ARN in the `Resource` field:
+```json
+"Resource": [
+  "arn:aws:iam::123456789012:role/my-db-access-role"
+]
+```
+This enables role-based authentication, useful for applications deployed on AWS platforms that automatically assume the role.
+
+
+#### **Key Customization Options in IAM Policies**
+Here’s a summary of customization options:
+
+| **Option**              | **Description**                                                                 |
+|--------------------------|---------------------------------------------------------------------------------|
+| **Action**               | Specify which AWS actions (e.g., `rds-db:connect`, `sts:GetCallerIdentity`) are allowed. |
+| **Resource**             | Restrict access to specific database ARN/cluster/user.                          |
+| **Condition**            | Apply conditions like IP-based access, region restrictions, etc.               |
+| **IAM Role**             | Use a role instead of a user for applications on AWS infrastructure.            |
+
+
+#### **Use Cases for Customizing Policies**
+- **Multi-Cluster Access:** The policy can grant access to multiple Atlas clusters by defining multiple ARNs in the `Resource` block.
+- **Application-Level Access:** Use IAM roles instead of users, ensuring access permissions align with applications deployed in AWS services like EC2 or Lambda.
+- **Enhanced Security:** Include conditions to restrict actions based on IP addresses, regions, or time-based access.
+
+
+#### **Example IAM Policy with Customizations**
+Here’s a more advanced example:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "rds-db:connect",
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": [
+        "arn:aws:rds-db:us-east-1:123456789012:dbuser:cluster1/mongodb-user1",
+        "arn:aws:rds-db:us-east-1:123456789012:dbuser:cluster2/mongodb-user2"
+      ],
+      "Condition": {
+        "IpAddress": {
+          "aws:SourceIp": "192.168.1.0/24"
+        },
+        "StringEquals": {
+          "aws:RequestedRegion": "us-east-1"
+        }
+      }
+    }
+  ]
+}
+```
+
+#### Key Features:
+1. Grants both `rds-db:connect` and `sts:GetCallerIdentity`.
+2. Limits access to specific clusters (`cluster1`, `cluster2`) and database users (`mongodb-user1`, `mongodb-user2`).
+3. Restricts access to specific IPs and regions.
+
+
+#### **Final Notes**
+- The IAM policy defines **how AWS IAM authenticates with MongoDB Atlas** but does not define database roles and permissions. Those must always be set in Atlas.
+- Depending on your use case (EC2, Lambda, multi-cluster access), you may need to modify the policy's `Action`, `Resource`, or add `Condition` blocks for tighter security.
 
 ---
 
