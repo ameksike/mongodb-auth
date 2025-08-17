@@ -14,12 +14,18 @@
     "demo:serviceaccount": "node src/index.js serviceaccount"
   },
   "dependencies": {
-    "mongodb": "^6.0.0",
     "aws-sdk": "^2.1490.0",
+    "aws4": "^1.13.2",
     "dotenv": "^16.3.1",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.0.0"
   },
-  "keywords": ["mongodb", "authentication", "demo", "nodejs"],
+  "keywords": [
+    "mongodb",
+    "authentication",
+    "demo",
+    "nodejs"
+  ],
   "author": "",
   "license": "MIT"
 }

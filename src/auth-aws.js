@@ -15,7 +15,7 @@ const { displayResults, handleError, displayMongoshCommands } = require('./share
 function configure() {
   const config = {
     // MongoDB Atlas cluster information
-    clusterUrl: process.env.AWS_MONGO_CLUSTER_URL || 'cluster0.example.mongodb.net',
+    cluster: process.env.AWS_MONGO_CLUSTER_URL || 'cluster0.example.mongodb.net',
     database: process.env.AWS_MONGO_DATABASE || 'testdb',
 
     // AWS credentials
@@ -79,7 +79,7 @@ async function main() {
 
   // Display mongosh equivalent
   displayMongoshCommands('aws', {
-    uri: `mongodb+srv://${config.clusterUrl}/${config.database}?authSource=$external&authMechanism=MONGODB-AWS`
+    uri: `mongodb+srv://${config.cluster}/${config.database}?authSource=$external&authMechanism=MONGODB-AWS`
   });
 
   // Check AWS credentials availability
@@ -98,7 +98,7 @@ async function main() {
     console.log(`   - Region: ${config.region}`);
 
     console.log('\n2. 🤝 Connecting to MongoDB Atlas...');
-    console.log(`   - Cluster: ${config.clusterUrl}`);
+    console.log(`   - Cluster: ${config.cluster}`);
     console.log('   - Authentication Source: $external');
     console.log('   - Mechanism: MONGODB-AWS');
 
