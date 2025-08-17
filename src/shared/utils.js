@@ -57,28 +57,28 @@ function displayMongoshCommands(authMethod, connectionInfo) {
       console.log(`mongosh "mongodb+srv://<username>:<password>@<cluster>/<database>?authSource=admin"`);
       console.log(`mongosh "${connectionInfo.uri}"`);
       console.log('// Or with explicit parameters:');
-      console.log(`mongosh --host ${connectionInfo.cluster || `${connectionInfo.host} --port ${connectionInfo.port}`} --username ${connectionInfo.username} --password --authenticationDatabase ${connectionInfo.authSource}`);
+      console.log(connectionInfo.cmd || `mongosh --host ${connectionInfo.cluster || `${connectionInfo.host} --port ${connectionInfo.port}`} --username ${connectionInfo.username} --password --authenticationDatabase ${connectionInfo.authSource}`);
       break;
 
     case 'certificate':
-      console.log(`mongosh "${connectionInfo.uri}" --tls --tlsCertificateKeyFile ${connectionInfo.certPath} --tlsCAFile ${connectionInfo.caPath}`);
+      console.log(connectionInfo.cmd || `mongosh "${connectionInfo.uri}" --tls --tlsCertificateKeyFile ${connectionInfo.certPath} --tlsCAFile ${connectionInfo.caPath}`);
       break;
 
     case 'aws':
       console.log('// Set AWS credentials first:');
       console.log('// export AWS_ACCESS_KEY_ID=your_access_key');
       console.log('// export AWS_SECRET_ACCESS_KEY=your_secret_key');
-      console.log(`mongosh "${connectionInfo.uri}" --authenticationMechanism MONGODB-AWS`);
+      console.log(connectionInfo.cmd || `mongosh "${connectionInfo.uri}" --authenticationMechanism MONGODB-AWS`);
       break;
 
     case 'apikey':
-      console.log(`mongosh "${connectionInfo.uri}" --username ${connectionInfo.username} --password ${connectionInfo.apiKey} --authenticationDatabase '$external' --authenticationMechanism MONGODB-X509`);
+      console.log(connectionInfo.cmd || `mongosh "${connectionInfo.uri}"`);
       break;
 
     case 'serviceaccount':
       console.log('// Set service account key file:');
       console.log('// export GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json');
-      console.log(`mongosh "${connectionInfo.uri}" --authenticationMechanism MONGODB-OIDC`);
+      console.log(connectionInfo.cmd || `mongosh "${connectionInfo.uri}" --authenticationMechanism MONGODB-OIDC`);
       break;
   }
 

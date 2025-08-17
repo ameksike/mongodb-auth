@@ -79,7 +79,14 @@ async function main() {
 
   // Display mongosh equivalent
   displayMongoshCommands('aws', {
-    uri: `mongodb+srv://${config.cluster}/${config.database}?authSource=$external&authMechanism=MONGODB-AWS`
+    cmd: `
+      $env:AWS_ACCESS_KEY_ID="${config.accessKeyId}"
+      $env:AWS_SECRET_ACCESS_KEY="${config.secretAccessKey}"
+      $env:AWS_SESSION_TOKEN="${config.sessionToken || ''}"
+      $env:AWS_REGION="${config.region}"
+        
+      mongosh '${config.uri}'
+    `
   });
 
   // Check AWS credentials availability
