@@ -78,7 +78,7 @@ aws iam create-policy --policy-name MongoDBAtlasAccess \
 }'
 ```
 
-Creates a custom IAM policy named MongoDBAtlasAccess based on the permissions defined in the policy.mdb.access.json file. This approach is ideal when the policy document is lengthy, as it is more manageable to write and maintain the policy in a separate file before referencing its path during creation.
+Creates a custom IAM policy named MongoDBAtlasAccess based on the permissions defined in the [policy.mdb.access.json](../cfg/policy.mdb.access.json) file. This approach is ideal when the policy document is lengthy, as it is more manageable to write and maintain the policy in a separate file before referencing its path during creation.
 
 
 
