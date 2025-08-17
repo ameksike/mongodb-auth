@@ -1,0 +1,12 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["rds-db:connect"],
+      "Resource": [
+        "arn:aws:rds-db:us-east-1:275662791714:dbuser:cluster-id/mongodb-user"
+      ]
+    }
+  ]
+}
