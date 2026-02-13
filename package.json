@@ -11,7 +11,8 @@
     "demo:certificate": "node src/index.js certificate",
     "demo:aws": "node src/index.js aws",
     "demo:apikey": "node src/index.js apikey",
-    "demo:serviceaccount": "node src/index.js serviceaccount"
+    "demo:sa": "node src/auth-sa.js",
+    "demo:oidc": "node src/index.js serviceaccount"
   },
   "dependencies": {
     "aws-sdk": "^2.1490.0",

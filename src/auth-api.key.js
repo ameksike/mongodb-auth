@@ -9,7 +9,7 @@ const DatabaseOperations = require('./shared/database-operations');
 const { displayResults, handleError, displayMongoshCommands } = require('./shared/utils');
 
 /**
- * Certificate-based authentication configuration
+ * API Key authentication configuration
  */
 function configure() {
   const config = {
@@ -23,16 +23,18 @@ function configure() {
     privateKey: process.env.API_KEY_PRIVATE_KEY
   };
 
+  // Build URI dynamically if not provided explicitly
   if (!config.uri) {
-    let host = config.cluster || `${config.host}:${config.port}`;
+    let host = config.cluster;
     let protocol = config.cluster ? "mongodb+srv" : "mongodb";
-    config.uri = `${protocol}://${encodeURIComponent(config.publicKey)}:${encodeURIComponent(config.privateKey)}@${host}/${config.database}?authSource=$external`;
+    config.uri = `${protocol}://${encodeURIComponent(config.publicKey)}:${encodeURIComponent(config.privateKey)}@${host}/${config.database}?authSource=$external&authMechanism=PLAIN`;
   }
 
+  // MongoDB connection options
   const options = {
     serverSelectionTimeoutMS: 10000,
-    authMechanism: 'PLAIN',
-    authSource: '$external',
+    // authMechanism: 'PLAIN',
+    // authSource: '$external',
     // auth: {
     //   username: config.publicKey,
     //   password: config.privateKey
@@ -54,9 +56,16 @@ const { config, options } = configure();
 function validateAPIKeys() {
   const hasKeys = config.publicKey && config.privateKey;
 
+  if (!config.publicKey) {
+    console.warn('⚠️ Missing API_KEY_PUBLIC_KEY in environment variables.');
+  }
+
+  if (!config.privateKey) {
+    console.warn('⚠️ Missing API_KEY_PRIVATE_KEY in environment variables.');
+  }
+
   if (!hasKeys) {
-    console.warn('⚠️  MongoDB API keys not found in environment variables');
-    console.warn('   Required: API_KEY_PUBLIC_KEY, API_KEY_PRIVATE_KEY');
+    console.warn('⚠️ MongoDB API keys are required for authentication.');
   }
 
   return hasKeys;
@@ -68,7 +77,7 @@ function validateAPIKeys() {
  */
 async function connectWithAPIKey() {
   if (!validateAPIKeys()) {
-    throw new Error('API keys not configured. Please set API_KEY_PUBLIC_KEY and API_KEY_PRIVATE_KEY.');
+    throw new Error('API keys are not configured. Please set API_KEY_PUBLIC_KEY and API_KEY_PRIVATE_KEY.');
   }
 
   const client = new MongoClient(config.uri, options);
@@ -78,79 +87,38 @@ async function connectWithAPIKey() {
     console.log('✅ Successfully connected using API key authentication');
     return client;
   } catch (error) {
+    console.error('❌ Error connecting to MongoDB:', error);
     throw new Error(`API key authentication failed: ${error.message}`);
   }
 }
 
 /**
- * Demonstrate API key authentication with fallback for demo
+ * Demonstrate API key authentication
  */
 async function main() {
   console.log('🔐 MongoDB API Key Authentication Demo');
   console.log('===================================\n');
 
-  // Display mongosh equivalent
-  displayMongoshCommands('apikey', {
-    uri: `mongodb+srv://${config.publicKey}:***@${config.cluster}/${config.database}?authSource=$external&authMechanism=MONGODB-X509`,
-    username: config.publicKey,
-    apiKey: '***'
-  });
+  // Display mongosh equivalent for diagnostic purposes
+  displayMongoshCommands('apikey', config);
 
-  // Check API keys availability
+  // Validate API keys
   const keysAvailable = validateAPIKeys();
 
   if (!keysAvailable) {
-    console.log('📋 API Key Authentication Demo (Simulation Mode)');
-    console.log('===============================================\n');
-
-    console.log('ℹ️  API keys not found. This is expected in a demo environment.');
-    console.log('📝 Here\'s what would happen with proper API key setup:\n');
-
-    // Simulate the authentication process
-    console.log('1. 🔍 Loading MongoDB Atlas API keys...');
-    console.log('   - Public Key: API_KEY_PUBLIC_KEY');
-    console.log('   - Private Key: API_KEY_PRIVATE_KEY');
-
-    console.log('\n2. 🤝 Connecting to MongoDB Atlas...');
-    console.log(`   - Cluster: ${config.cluster}`);
-    console.log('   - Authentication Source: $external');
-    console.log('   - Mechanism: MONGODB-X509 or PLAIN');
-
-    console.log('\n3. 🔐 API Key Authentication Process...');
-    console.log('   - Atlas validates API key pair');
-    console.log('   - Public key identifies the user/application');
-    console.log('   - Private key provides authentication proof');
-    console.log('   - Permissions determined by API key configuration');
-
-    console.log('\n4. ✅ Connection established with API key permissions');
-
-    // Simulate database operations
-    console.log('\n📋 Database operations that would be performed:');
-    displayResults('Simulated Databases', ['admin', 'config', 'local', 'testdb']);
-    displayResults('Simulated Collections', ['auth_demo', 'users', 'logs']);
-
-    const simulatedDoc = {
-      _id: 'simulated_id',
-      timestamp: new Date(),
-      authMethod: 'api-key',
-      message: 'Hello from API key authentication!',
-      apiKeyPublic: 'simulated-public-key'
-    };
-    displayResults('Simulated Inserted Document', simulatedDoc);
-
-    console.log('📚 See documentation for complete API key setup instructions.');
+    console.log('\nℹ️ API keys are missing. Demo cannot connect to MongoDB Atlas.');
+    console.log('📝 Please ensure proper API key setup in your environment variables.');
     return;
   }
 
-  // Actual API key authentication (if keys are available)
   let client;
 
   try {
     console.log('🔍 Validating API key configuration...');
-    console.log(`   Public Key: ${config.publicKey.substring(0, 8)}...`);
+    console.log(`   Public Key: ${config.publicKey.substring(0, 4)}****`);
     console.log('   Private Key: [REDACTED]');
 
-    // Try both authentication methods
+    // Attempt connection
     client = await connectWithAPIKey();
 
     // Create database operations instance
@@ -163,7 +131,7 @@ async function main() {
     const databases = await dbOps.listDatabases();
     displayResults('Available Databases', databases);
 
-    // Use test database
+    // Select test database
     const testDb = config.database;
     console.log(`🎯 Working with database: ${testDb}`);
 
@@ -176,13 +144,13 @@ async function main() {
       timestamp: new Date(),
       authMethod: 'api-key',
       message: 'Hello from API key authentication!',
-      apiKeyPublic: config.publicKey
+      apiKeyPublic: config.publicKey,
     };
 
     const insertResult = await dbOps.insertTestDocument(testDb, 'auth_demo', testDoc);
     displayResults('Insert Result', { insertedId: insertResult.insertedId });
 
-    // Get sample documents
+    // Retrieve sample documents
     const sampleDocs = await dbOps.getSampleDocuments(testDb, 'auth_demo', 3);
     displayResults('Sample Documents from auth_demo', sampleDocs);
 
@@ -192,32 +160,39 @@ async function main() {
       collections: stats.collections,
       dataSize: `${(stats.dataSize / 1024).toFixed(2)} KB`,
       indexSize: `${(stats.indexSize / 1024).toFixed(2)} KB`,
-      objects: stats.objects
+      objects: stats.objects,
     });
 
     console.log('✅ API key authentication demo completed successfully!');
-
   } catch (error) {
+    // Handle errors gracefully
     handleError(error, 'API Key Authentication Demo');
     console.log('\n💡 Tips:');
     console.log('   - Ensure API keys are properly generated in Atlas');
     console.log('   - Verify API key permissions for database access');
     console.log('   - Check if API key is active and not revoked');
-    console.log('   - Validate cluster configuration allows API key auth');
+    console.log('   - Validate cluster configuration allows API key authentication');
   } finally {
     if (client) {
-      await client.close();
-      console.log('🔌 Connection closed');
+      try {
+        await client.close();
+        console.log('🔌 Connection closed successfully');
+      } catch (closeError) {
+        console.error('❌ Error closing connection:', closeError.message);
+      }
     }
   }
 }
 
-// Run demo if called directly
+// Run demo if called directly  
 if (require.main === module) {
-  main();
+  main().catch((err) => {
+    console.error('❌ An unexpected error occurred:', err.message);
+    process.exit(1);
+  });
 }
 
 module.exports = {
   connectWithAPIKey,
-  main
-};
+  main,
+};  
