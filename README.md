@@ -244,6 +244,10 @@ DEBUG=true node src/index.js [method]
 - [X.509 Certificate Tutorial](https://docs.mongodb.com/manual/tutorial/configure-x509-client-authentication/)
 - [AWS IAM Authentication Guide](https://docs.atlas.mongodb.com/security-aws-iam/)
 
+## 📖 Similar Topics
+
+- [Going Passwordless - A Practical Guide to Passkeys in ASP.NET Core](https://youtu.be/U4_KcjJOxOE?list=PLdo4fOcmZ0oXtIlvq1tuORUtZqVG-HdCt)
+
 ## 🤝 Contributing
 
 1. Fork the repository
